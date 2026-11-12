@@ -14,8 +14,9 @@ jobs:
       - name: Create Xcode Project & Build IPA
         run: |
           mkdir -p MyAthanApp
-          cp *.swift MyAthanApp/
-          cp *.m4a MyAthanApp/
+          cp ContentView.swift MyAthanApp/
+          cp MyApp.swift MyAthanApp/
+          cp *.m4a MyAthanApp/ || true
           
           cat << 'EOF' > project.yml
           name: MyAthan
