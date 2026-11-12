@@ -1,0 +1,49 @@
+name: Build Unsigned IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create Xcode Project & Build IPA
+        run: |
+          mkdir -p MyAthanApp
+          cp *.swift MyAthanApp/
+          cp *.m4a MyAthanApp/
+          
+          cat << 'EOF' > project.yml
+          name: MyAthan
+          options:
+            bundleIdPrefix: com.personal
+          targets:
+            MyAthan:
+              type: application
+              platform: iOS
+              deploymentTarget: "16.0"
+              sources: [MyAthanApp]
+              info:
+                path: MyAthanApp/Info.plist
+                properties:
+                  UIBackgroundModes: [audio]
+                  NSLocationWhenInUseUsageDescription: "Calculates local prayer times."
+                  UILaunchScreen: {}
+          EOF
+          
+          brew install xcodegen
+          xcodegen generate
+          xcodebuild -project MyAthan.xcodeproj -scheme MyAthan -configuration Release -sdk iphoneos -archivePath MyAthan.xcarchive archive CODE_SIGNING_ALLOWED=NO
+          mkdir -p Payload
+          cp -r MyAthan.xcarchive/Products/Applications/MyAthan.app Payload/
+          zip -r MyAthan.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyAthan-IPA
+          path: MyAthan.ipa
